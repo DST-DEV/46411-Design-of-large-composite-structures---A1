@@ -177,8 +177,12 @@ cython_debug/
 .pypirc
 
 # Image files etc
-.png
-.svg
-.pdf
-.jpg
-.webp
+*.png
+*.svg
+*.pdf
+*.jpg
+*.webp
+
+# Microsof Office files
+*.xlsx
+*.doxc
