@@ -1,0 +1,80 @@
+lamina:
+  lamina_1:
+    fibre_volume_fraction: 0.5
+    elastic_properties:
+      E1: 39.5e9
+      E2: 12.09901e9
+      G12: 4.53864e9
+      G23: 4.53864e9
+      nu12: 0.275
+      nu23: 0.3329
+      nu21: 0.084234
+    density:
+      value: 1845
+  lamina_2:
+    fibre_volume_fraction: 0.55
+    elastic_properties:
+      E1: 43.05e9
+      E2: 13.42583e9
+      G12: 5.04698e9
+      G23: 5.04698e9
+      nu12: 0.2675
+      nu23: 0.3301
+      nu21: 0.083424
+    density:
+      value: 1915.5
+multidirectional_ply:
+  triax:
+    fibre_volume_fraction: 0.5
+    elastic_properties:
+      E1: 21.79e9
+      E2: 14.67e9
+      G12: 9.413e9
+      G23: 4.53864e9
+      nu12: 0.478
+      nu21: 0.3218
+    density:
+      value: 1845
+      unit: kg/m^3
+    strength_properties:
+      sigma_1t: 472.06e6
+      sigma_1c: 324.16e6
+      sigma_2t: 127.12e6
+      sigma_2c: 127.12e6
+      tau_12: 99.25e6
+
+  uniax:
+    fibre_volume_fraction: 0.55
+    elastic_properties:
+      E1: 41.63e9
+      E2: 14.93e9
+      G12: 5.047e9
+      G23: 5.04698e9
+      nu12: 0.241
+      nu21: 0.086
+    density:
+      value: 1915.5
+    strength_properties:
+      sigma_1t: 903.6e6
+      sigma_1c: 660.2e6
+      sigma_2t: 42.14e6
+      sigma_2c: 170e6
+      tau_12: 50e6
+
+  biax:
+    fibre_volume_fraction: 0.5
+    elastic_properties:
+      E1: 13.92e9
+      E2: 13.92e9
+      G12: 11.5e9
+      G23: 4.539e9
+      nu12: 0.53
+      nu21: 0.53
+    density:
+      value: 1845
+    strength_properties:
+      sigma_1t: 214.2e6
+      sigma_1c: 184.9e6
+      sigma_2t: 214.2e6
+      sigma_2c: 184.9e6
+      tau_12: 143.9
