@@ -32,24 +32,28 @@ class TsaiWu(FailureCriterion):
       through the linear stress terms.
     """
 
-    def __init__(self,
-                 s_hat_1t: int | float | np.number,
-                 s_hat_1c: int | float | np.number,
-                 s_hat_2t: int | float | np.number,
-                 s_hat_2c: int | float | np.number,
-                 t_hat_12: int | float | np.number):
-        self.s_hat_1t = s_hat_1t
-        self.s_hat_1c = s_hat_1c
-        self.s_hat_2t = s_hat_2t
-        self.s_hat_2c = s_hat_2c
-        self.t_hat_12 = t_hat_12
-
-    def failure_index(self, stress: np.ndarray) -> float:
+    @staticmethod
+    def failure_index(s_hat_1t: int | float | np.number,
+                      s_hat_1c: int | float | np.number,
+                      s_hat_2t: int | float | np.number,
+                      s_hat_2c: int | float | np.number,
+                      t_hat_12: int | float | np.number,
+                      stress: np.ndarray) -> float:
         """
         Compute the Tsai–Wu failure index for a given stress state.
 
         Parameters
         ----------
+        s_hat_1t : float
+            Tensile strength in material direction 1.
+        s_hat_1c : float
+            Compressive strength in material direction 1.
+        s_hat_2t : float
+            Tensile strength in material direction 2.
+        s_hat_2c : float
+            Compressive strength in material direction 2.
+        t_hat_12 : float
+            In-plane shear strength.
         stress : ndarray of shape (3,)
             Local ply stress vector: [σ1, σ2, τ12]
 
@@ -60,16 +64,22 @@ class TsaiWu(FailureCriterion):
         """
         s1, s2, t12 = stress
 
-        f1 = 1/self.s_hat_1t - 1/self.s_hat_1c
-        f2 = 1/self.s_hat_2t - 1/self.s_hat_2c
-        f11 = 1/(self.s_hat_1t*self.s_hat_1c)
-        f22= 1/(self.s_hat_2t*self.s_hat_2c)
-        f66 = 1/self.t_hat_12**f2
+        f1 = 1/s_hat_1t - 1/s_hat_1c
+        f2 = 1/s_hat_2t - 1/s_hat_2c
+        f11 = 1/(s_hat_1t*s_hat_1c)
+        f22= 1/(s_hat_2t*s_hat_2c)
+        f66 = 1/t_hat_12**f2
         f12 = -.5*np.sqrt(f11*f22)
 
         return f1*s1 + f2*s2 + f11*s1**2 + f22*s2**2 + f66*t12**2 + 2*f12*s1*s2
 
-    def failure_envelope(self, n_points: int = 400, t12: float = 0.0
+    @staticmethod
+    def failure_envelope(s_hat_1t: int | float | np.number,
+                         s_hat_1c: int | float | np.number,
+                         s_hat_2t: int | float | np.number,
+                         s_hat_2c: int | float | np.number,
+                         t_hat_12: int | float | np.number,
+                         n_points: int = 400, t12: float = 0.0
                          ) -> tuple[np.ndarray, np.ndarray]:
         """
         Compute the closed Tsai–Wu failure envelope in the (σ1, σ2) plane
@@ -81,6 +91,16 @@ class TsaiWu(FailureCriterion):
 
         Parameters
         ----------
+        s_hat_1t : float
+            Tensile strength in material direction 1.
+        s_hat_1c : float
+            Compressive strength in material direction 1.
+        s_hat_2t : float
+            Tensile strength in material direction 2.
+        s_hat_2c : float
+            Compressive strength in material direction 2.
+        t_hat_12 : float
+            In-plane shear strength.
         n_points : int, optional
             Number of sampling points along the σ1 axis.
         t12 : float, optional
@@ -101,15 +121,15 @@ class TsaiWu(FailureCriterion):
         """
 
         # Strength coefficients
-        f1 = 1/self.s_hat_1t - 1/self.s_hat_1c
-        f2 = 1/self.s_hat_2t - 1/self.s_hat_2c
-        f11 = 1/(self.s_hat_1t*self.s_hat_1c)
-        f22 = 1/(self.s_hat_2t*self.s_hat_2c)
-        f66 = 1/self.t_hat_12**2
+        f1 = 1/s_hat_1t - 1/s_hat_1c
+        f2 = 1/s_hat_2t - 1/s_hat_2c
+        f11 = 1/(s_hat_1t*s_hat_1c)
+        f22 = 1/(s_hat_2t*s_hat_2c)
+        f66 = 1/t_hat_12**2
         f12 = -0.5 * np.sqrt(f11 * f22)
 
         # Create σ1 range
-        s1 = np.linspace(-self.s_hat_1c, self.s_hat_1t, n_points)
+        s1 = np.linspace(-s_hat_1c, s_hat_1t, n_points)
 
         # Quadratic coefficients in σ2
         a = f22
@@ -145,15 +165,16 @@ class TsaiWu(FailureCriterion):
 
 if __name__ == "__main__":
 
-    tsai_wu = TsaiWu(s_hat_1t=1080e6, s_hat_1c=620e6,
-                         s_hat_2c=128e6, s_hat_2t=39e6, t_hat_12=89e6)
+    strength = dict(s_hat_1t=1080e6, s_hat_1c=620e6,
+                    s_hat_2c=128e6, s_hat_2t=39e6, t_hat_12=89e6)
 
     s1 = [1.079e9, 1.079e9, -618e6, -622e6]
     s2 = [38e6, -120e6, 38e6, -120e6]
     t6 = [88e6, 10e6, 0, 0]
 
     for i, (s1_i, s2_i, t6_i) in enumerate(zip(s1, s2, t6)):
-        if tsai_wu.failure_index((s1_i, s2_i, t6_i)) < 1:
+        if TsaiWu.failure_index(stress=(s1_i, s2_i, t6_i),
+                                **strength) < 1:
             print (f"Load case {i}: no failure")
         else:
             print (f"Load case {i}: failure")
