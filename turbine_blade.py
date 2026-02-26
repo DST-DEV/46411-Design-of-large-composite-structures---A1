@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 class TurbineBlade:
-    def __init__(self, data_dir = Path(__file__).parent):
+    def __init__(self, data_dir = Path(__file__).parent / "_data"):
         data_dir = Path(data_dir)
 
         xj, _ = self._load_spline_params(data_dir / "coeffs_chord.csv")
