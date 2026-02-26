@@ -34,6 +34,16 @@ class OrthotropicLamina(Material2D):
     nu12 : float
         Major Poisson’s ratio (strain in direction 2 due to stress in
         direction 1).
+    s_hat_1t : float
+        Tensile strength in material direction 1.
+    s_hat_1c : float
+        Compressive strength in material direction 1.
+    s_hat_2t : float
+        Tensile strength in material direction 2.
+    s_hat_2c : float
+        Compressive strength in material direction 2.
+    t_hat_12 : float
+        In-plane shear strength.
 
     Attributes
     ----------
@@ -53,12 +63,31 @@ class OrthotropicLamina(Material2D):
     - Valid only for plane stress applications in Classical Laminate Theory.
     - No temperature, damage, or nonlinear effects are included.
     """
-    E1: float
-    E2: float
-    G12: float
-    nu12: float
+    E1: float = field(doc="Young’s modulus in material direction 1",
+                      metadata={"unit": "Pa"})
+    E2: float = field(doc="Young’s modulus in material direction 2",
+                      metadata={"unit": "Pa"})
+    G12: float = field(doc="In-plane shear modulus",
+                       metadata={"unit": "Pa"})
+    nu12: float = field(doc="Major Poisson’s ratio")
     Q: np.ndarray = field(init=False, repr=False, doc="Stiffness matrix")
     S: np.ndarray = field(init=False, repr=False, doc="Compliance matrix")
+    s_hat_1t: float = field(default=0,
+                            doc="Tensile strength in material direction 1",
+                            metadata={"unit": "Pa"})
+    s_hat_1c: float = field(default=0,
+                            doc="Compressive strength in material direction 1",
+                            metadata={"unit": "Pa"})
+    s_hat_2t: float = field(default=0,
+                            doc="Tensile strength in material direction 2",
+                            metadata={"unit": "Pa"})
+    s_hat_2c: float = field(default=0,
+                            doc="Compressive strength in material direction 1",
+                            metadata={"unit": "Pa"})
+    t_hat_12: float = field(default=0,
+                            doc="In-plane shear strength",
+                            metadata={"unit": "Pa"})
+
 
     def __post_init__(self):
         S = self._compute_compliance()
@@ -75,6 +104,11 @@ class OrthotropicLamina(Material2D):
             [0, 0, 1/self.G12]
         ])
         return S
+
+    def strength_as_dict(self):
+        return {"s_hat_1t": self.s_hat_1t, "s_hat_1c": self.s_hat_1c,
+                "s_hat_2t": self.s_hat_2t, "s_hat_2c": self.s_hat_2c,
+                "t_hat_12": self.t_hat_12}
 
 if __name__ == "__main__":
     glass_lamina = OrthotropicLamina(E1=40e9, E2=9.8e9, G12=2.8e9, nu12=.3)
