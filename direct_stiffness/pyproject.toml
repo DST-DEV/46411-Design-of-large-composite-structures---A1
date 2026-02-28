@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Information on the package
+[project]
+name = "direct_stiffness"
+description = "A Python package for finite element calculations using the direct stiffness method."
+readme = "README.md"
+version = "0.0.1"
+requires-python = ">= 3.12"
+authors = [
+    { name = "Davis Stöwer", email = "s242864@dtu.dk" }
+]
+
+dependencies = [
+    "numpy>2.2",
+]
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/DST-DEV/direct_stiffness"
