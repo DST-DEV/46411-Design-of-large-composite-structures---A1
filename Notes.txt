@@ -1,0 +1,1 @@
+- Balsa wood at tip neglected bc tip is not heavily loaded anyways => not a critical region (Note that this leads to an overestimation of the tip bending since the last three sections are less stiff than they would be normally)

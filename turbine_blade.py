@@ -1,9 +1,12 @@
+from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import Callable, Sequence, Union
 
 import yaml
 import numpy as np
 import pandas as pd
+
+import classical_laminate_theory as clt
 
 class TurbineBlade:
     def __init__(self, data_dir = Path(__file__).parent / "_data"):
@@ -25,7 +28,7 @@ class TurbineBlade:
             materials = yaml.safe_load(file)
 
         self._lamina = materials.get("lamina")
-        self._ply_multidir = materials.get("multidirectional_ply")
+        self._multiax_plies = materials.get("multidirectional_ply")
 
         self._layup = pd.read_csv(data_dir / "layup.csv")
         self._layup.columns = [col.split("[")[0].strip().lower()
@@ -219,9 +222,107 @@ class TurbineBlade:
 
         return spline
 
+    @staticmethod
+    def create_lamina(material: dict) -> clt.materials.EquivalentLamina:
+        """
+        Create a lamina from a dict of material properties
+
+        Parameters
+        ----------
+        material : dict
+            Material properties of the lamina.
+
+        Returns
+        -------
+        mat : clt.materials.EquivalentLamina
+            Equivalent lamina with the specified material properties.
+
+        """
+        stiffness = material["elastic_properties"]
+        strength = material["strength_properties"]
+        mat = clt.materials.EquivalentLamina(
+            E1=stiffness["E1"], E2=stiffness["E2"],
+            G12=stiffness["G12"], nu12=stiffness["nu12"],
+            nu21=stiffness["nu21"],
+            s_hat_1t=strength["sigma_1t"], s_hat_1c=strength["sigma_1c"],
+            s_hat_2t=strength["sigma_2t"], s_hat_2c=strength["sigma_2c"],
+            t_hat_12=strength["tau_12"])
+
+        return mat
+
+    def create_laminates(self, layup: None | pd.core.frame.DataFrame = None
+                         ) -> list[BladeSection]:
+        """
+        Create the laminates from a spanwise layup distribution.
+
+        Parameters
+        ----------
+        layup : None | pd.core.frame.DataFrame, optional
+            Layup of the laminates along the blade span.
+            If None is given, the layup of the class instance is used.
+            The default is None.
+
+        Raises
+        ------
+        TypeError
+            If layup is not a pandas DataFrame.
+
+        Returns
+        -------
+        list[BladeSection]
+            List of blade sections containing the laminate and spanwise
+            position for each cross section.
+
+        """
+        if layup is None:
+            layup = self.layup
+        elif not isinstance(layup, pd.core.frame.DataFrame):
+            raise TypeError("layup must be a pandas DataFrame.")
+
+        uniax = self.create_lamina(self._multiax_plies["uniax"])
+        triax = self.create_lamina(self._multiax_plies["triax"])
+
+        laminates = []
+        for i, section in layup.iterrows():
+            plies = []
+            for ply in ["triax1", "uniax1", "uniax2", "triax2"]:
+                if section[ply]>0:
+                    if "uniax" in ply:
+                        plies.append(clt.Ply(material=uniax, theta=0,
+                                             thickness=section[ply]))
+                    else:
+                        plies.append(clt.Ply(material=triax, theta=0,
+                                             thickness=section[ply]))
+
+            if len(plies)>0:
+                thickness = sum(p.thickness for p in plies)
+
+                laminates.append(BladeSection(
+                    r_start=section.r_start,
+                    r_end=section.r_end,
+                    length=section.r_end-section.r_start,
+                    thickness=thickness,
+                    laminate=clt.Laminate(plies)))
+            else:
+                pass
+
+        return laminates
+
+
+@dataclass(frozen=True, slots=True)
+class BladeSection:
+    r_start: float
+    r_end: float
+    length: float
+    thickness: float
+    laminate: clt.Laminate
+
 if __name__ == "__main__":
     blade = TurbineBlade()
 
     import matplotlib.pyplot as plt
     x = np.linspace(blade.r_root, blade.L, 300)
-    plt.plot(x, blade.chord(x))
+    plt.plot(x, blade.thickness(x))
+    plt.plot(x, blade.thickness_abs(x))
+
+    laminates = blade.create_laminates()
