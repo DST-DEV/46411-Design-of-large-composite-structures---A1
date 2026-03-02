@@ -35,14 +35,12 @@ multidirectional_ply:
       nu21: 0.3218
     density:
       value: 1845
-      unit: kg/m^3
     strength_properties:
       sigma_1t: 472.06e+6
       sigma_1c: 324.16e+6
       sigma_2t: 127.12e+6
       sigma_2c: 127.12e+6
       tau_12: 99.25e+6
-
   uniax:
     fibre_volume_fraction: 0.55
     elastic_properties:
@@ -58,9 +56,8 @@ multidirectional_ply:
       sigma_1t: 903.6e+6
       sigma_1c: 660.2e+6
       sigma_2t: 42.14e+6
-      sigma_2c: 170e+6
-      tau_12: 50e+6
-
+      sigma_2c: 170.0e+6
+      tau_12: 50.0e+6
   biax:
     fibre_volume_fraction: 0.5
     elastic_properties:
@@ -77,4 +74,4 @@ multidirectional_ply:
       sigma_1c: 184.9e+6
       sigma_2t: 214.2e+6
       sigma_2c: 184.9e+6
-      tau_12: 143.9
+      tau_12: 143.9e+6
