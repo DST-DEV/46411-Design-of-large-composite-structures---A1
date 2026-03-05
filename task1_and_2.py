@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from turbine_blade import TurbineBlade
 from direct_stiffness import Frame, BeamElement, ManualCrossSection
 import classical_laminate_theory as clt
+import scivis
 
 # %% Create blade from input data
 data_dir = Path(__file__).parent / "_data"
@@ -22,6 +23,13 @@ t_spar = np.array([section.thickness for section in laminates])
 t_bld = np.average(blade.thickness_abs(span_coords), axis=1)
 chord_bld = np.average(blade.chord(span_coords), axis=1)
 w_spar = np.average(blade.w_spar(span_coords), axis=1)
+
+x = np.zeros(len(laminates) + 1)
+x[:-1] = span_coords[:, 0]
+x[-1] = span_coords[-1, 1]
+fig, ax, _ = scivis.plot_line(x, blade.w_spar(x)*1e3, ax_labels=["r", "b"],
+                              ax_units=["m", "mm"])
+fig.show()
 
 # %% Determine stiffness the cross sections (simplified beam)
 abd_bld = np.stack([np.linalg.inv(section.laminate.ABD_matrix)
@@ -78,9 +86,6 @@ print(f"Tower clearance: {tower_clearance-U_corrected[-1]:.2f} m")
 
 # Plot deflection over blade span
 fig, ax = plt.subplots(figsize=(16, 10))
-x = np.zeros(len(U))
-x[:-1] = span_coords[:, 0]
-x[-1] = span_coords[-1, 1]
 ax.plot(x, U[:, 1])
 ax.set_xlabel(r"$x$ [m]")
 ax.set_ylabel(r"$u$ [m]")
