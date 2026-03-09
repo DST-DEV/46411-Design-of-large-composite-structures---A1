@@ -29,6 +29,7 @@ class TurbineBlade:
 
         self._lamina = materials.get("lamina")
         self._multiax_plies = materials.get("multidirectional_ply")
+        self._balsa = materials.get("balsa")
 
         self._layup = pd.read_csv(data_dir / "layup.csv")
         self._layup.columns = [col.split("[")[0].strip().lower()
@@ -53,6 +54,11 @@ class TurbineBlade:
     def ply_multidir(self):
         """Multiaxial ply material properties."""
         return self._ply_multidir
+
+    @property
+    def balsa(self):
+        """Balsa wood material properties."""
+        return self._balsa
 
     @property
     def layup(self):
@@ -282,17 +288,28 @@ class TurbineBlade:
         uniax = self.create_lamina(self._multiax_plies["uniax"])
         triax = self.create_lamina(self._multiax_plies["triax"])
 
+        E1_balsa = self.balsa["elastic_properties"]["E1"]
+        nu12_balsa = self.balsa["elastic_properties"]["nu12"]
+        balsa = clt.materials.IsotropicMaterial(E1=E1_balsa, nu12=nu12_balsa)
+
         laminates = []
         for i, section in layup.iterrows():
             plies = []
-            for ply in ["triax1", "uniax1", "uniax2", "triax2"]:
+            ply_names = []
+            for ply in ["triax1", "uniax1", "balsa", "uniax2", "triax2"]:
                 if section[ply]>0:
                     if "uniax" in ply:
                         plies.append(clt.Ply(material=uniax, theta=0,
                                              thickness=section[ply]))
-                    else:
+                        ply_names.append(ply)
+                    elif "triax" in ply:
                         plies.append(clt.Ply(material=triax, theta=0,
                                              thickness=section[ply]))
+                        ply_names.append(ply)
+                    elif "balsa" in ply:
+                        plies.append(clt.Ply(material=balsa, theta=0,
+                                             thickness=section[ply]))
+                        ply_names.append(ply)
 
             if len(plies)>0:
                 thickness = sum(p.thickness for p in plies)
@@ -302,6 +319,7 @@ class TurbineBlade:
                     r_end=section.r_end,
                     length=section.r_end-section.r_start,
                     thickness=thickness,
+                    ply_names=tuple(ply_names),
                     laminate=clt.Laminate(plies)))
             else:
                 pass
@@ -315,6 +333,7 @@ class BladeSection:
     r_end: float
     length: float
     thickness: float
+    ply_names: tuple
     laminate: clt.Laminate
 
 if __name__ == "__main__":

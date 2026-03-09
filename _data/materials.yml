@@ -23,6 +23,25 @@ lamina:
       nu21: 0.083424
     density:
       value: 1915.5
+balsa:
+    elastic_properties:
+      E1: 0.05e+9
+      E2: 0.05e+9
+      E3: 2.73e+9
+      G12: 0.01667e+9
+      G13: 0.15e+9
+      G23: 0.15e+9
+      nu12: 0.5
+      nu13: 0.013
+      nu23: 0.013
+    density:
+      value: 110
+    strength_properties:
+      sigma_1t: 0
+      sigma_1c: 0
+      sigma_2t: 0
+      sigma_2c: 0
+      tau_12: 0
 multidirectional_ply:
   triax:
     fibre_volume_fraction: 0.5
