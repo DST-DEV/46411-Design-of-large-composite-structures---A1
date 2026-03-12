@@ -90,7 +90,8 @@ with mpl.rc_context(rcparams):
     for t1, t2 in zip(ax.get_yticklabels(), ax2.get_yticklabels()):
         t2.set_fontproperties(t1.get_fontproperties())
 
-    fig.savefig(exp_fld / "p1_thickness_vs_span.svg")
+    if savefigs:
+        fig.savefig(exp_fld / "p1_thickness_vs_span.svg")
 
 
     # Plot spar cap thickness vs spanwise position
@@ -304,9 +305,11 @@ P_buckling = np.stack([P_func(m=m, a=l_sections, b=w_spar, D=D_bld)
 P_cr_buckling = np.min(P_buckling, axis=0)
 idx_P_cr = np.argmin(P_buckling, axis=0)
 
+Nx = np.zeros_like(x)
+Nx[:-1] = sigma[:-1] * t_spar
+
 buckling_reserve = np.zeros_like(x)
-buckling_reserve[:-1] = sigma[:-1]*t_spar/P_cr_buckling
-buckling_reserve[-1] = 0  # Since no load at tip
+buckling_reserve[:-1] = Nx[:-1] / P_cr_buckling
 
 # Plot critical buckling load vs spanwise position
 P_cr_buckling_plot = np.zeros_like(x)
@@ -327,29 +330,29 @@ colors = ["#da881b", "#d02940", "#8f0062", "#1a0079"]
 rcparams = scivis.rcparams._prepare_rcparams(profile="partsize", scale=.65)
 with mpl.rc_context(rcparams):
     fig, ax, _ = scivis.plot_line(x, P_buckling_plot*1e-6,
-                                  ax_labels=["r", r"P"], ax_units=["m", "MN"],
+                                  ax_labels=["r", r"P"], ax_units=["m", "MN/m"],
                                   plt_labels=[fr"$P\:(m={m})$" for m in m_vec],
                                   linestyles="-",
                                   colors=colors)
     ax.plot(x, P_cr_buckling_plot*1e-6, ls="-", c="k", label="$P_{cr}$")
+    ax.plot(x, Nx*1e-6, ls="-.", c="k", lw=2, label="$N_x$")
+
     ax.legend(loc="upper left", bbox_to_anchor=(1, 1), fontsize="22")
-    fig.savefig(exp_fld / "p2_buckling_load_all_vs_span.svg")
+    if savefigs:
+        fig.savefig(exp_fld / "p2_buckling_load_all_vs_span.svg")
 
     fig, ax, _ = scivis.plot_line(x, buckling_reserve*1e2,
                                   ax_labels=["r", r"N_x/P_{cr}"],
-                                             # r"(P_{cr}-N_x)/P_{cr}"],
                                   ax_units=["m", r"\%"],
                                   profile="partsize", scale=.65)
     ax.axhline(y=100, ls="-.", c="k", lw=2)
 
-    fig.savefig(exp_fld / "p2_buckling_reserve_vs_span.svg")
+    if savefigs:
+        fig.savefig(exp_fld / "p2_buckling_reserve_vs_span.svg")
 
-Nx = np.zeros_like(x)
-Nx[:-1] = sigma[:-1] * t_spar
-Nx[-1] = 1  # Since no load at tip
 fig, ax, _ = scivis.plot_line(x, np.vstack([P_cr_buckling_plot, Nx])*1e-6,
-                              ax_labels=["r", r"load"], ax_units=["m", "MN"],
-                              plt_labels=["P_{cr}", "Nx"],
+                              ax_labels=["r", r"load"], ax_units=["m", "MN/m"],
+                              plt_labels=["$P_{cr}$", "$N_x$"],
                               profile="partsize", scale=.65)
 
 # %%% Task 2b: Strength
@@ -397,27 +400,31 @@ failure_plot[2, -1] = failure_tsaiwu["uniax"][-1]
 failure_plot[3, -1] = failure_tsaiwu["triax"][-1]
 rcparams = scivis.rcparams._prepare_rcparams(profile="partsize", scale=.65)
 with mpl.rc_context(rcparams):
-    fig, ax, _ = scivis.plot_line(x, failure_plot,
+    fig, ax = scivis.subplots(figsize=(20,8))
+    fig, ax, _ = scivis.plot_line(x, failure_plot, ax=ax,
                                   ax_labels=["r", None], ax_units=["m", None],
                                   colors=["#da881b", "#8f0062"]*2,
                                   linestyles=["-"]*2 + ["--"]*2,
+                                  profile="partsize", scale=.6,
+                                  override_axes_settings=True,
                                   show_legend=False)
 
     # Add two legend manually
     legend_handles = [mpl.lines.Line2D([0], [0], c='black', ls=ls, label=lbl)
                       for ls, lbl in [["-", "Tsai-Hill"], ["--", "Tsai-Wu"]]]
     ax.legend(handles=legend_handles, loc="upper left",
-              bbox_to_anchor=(1, 1))
+              bbox_to_anchor=(1, 1), fontsize=33)
     ax.add_artist(ax.get_legend())
 
     legend_handles = [mpl.lines.Line2D([0], [0], c=c, ls="-", label=lbl)
                       for c, lbl in [["#da881b", "Uniaxial ply"],
                                      ["#8f0062", "Triaxial Ply"]]]
     ax.legend(handles=legend_handles, loc="upper left",
-              bbox_to_anchor=(1, .7))
+              bbox_to_anchor=(1, .7), fontsize=33)
 
     ax.set_ylabel("Failure index")
 
-    fig.savefig(exp_fld / "p2_failure_vs_span.svg")
+    if savefigs:
+        fig.savefig(exp_fld / "p2_failure_vs_span.svg")
 
 plt.show()
