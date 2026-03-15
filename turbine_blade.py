@@ -53,7 +53,7 @@ class TurbineBlade:
     @property
     def ply_multidir(self):
         """Multiaxial ply material properties."""
-        return self._ply_multidir
+        return self._multiax_plies
 
     @property
     def balsa(self):
@@ -285,8 +285,8 @@ class TurbineBlade:
         elif not isinstance(layup, pd.core.frame.DataFrame):
             raise TypeError("layup must be a pandas DataFrame.")
 
-        uniax = self.create_lamina(self._multiax_plies["uniax"])
-        triax = self.create_lamina(self._multiax_plies["triax"])
+        uniax = self.create_lamina(self.ply_multidir["uniax"])
+        triax = self.create_lamina(self.ply_multidir["triax"])
 
         E1_balsa = self.balsa["elastic_properties"]["E1"]
         nu12_balsa = self.balsa["elastic_properties"]["nu12"]
