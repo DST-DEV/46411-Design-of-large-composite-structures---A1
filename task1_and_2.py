@@ -356,75 +356,115 @@ fig, ax, _ = scivis.plot_line(x, np.vstack([P_cr_buckling_plot, Nx])*1e-6,
                               profile="partsize", scale=.55)
 
 # %%% Task 2b: Strength
-failure_tsaihill = {"uniax": np.zeros(len(laminates)),
-                    "triax": np.zeros(len(laminates))}
-failure_tsaiwu = {"uniax": np.zeros(len(laminates)),
-                  "triax": np.zeros(len(laminates))}
+failure_tsaihill = {"uniax": np.zeros((2, len(laminates))),
+                    "triax": np.zeros((2, len(laminates)))}
+failure_tsaiwu = {"uniax": np.zeros((2, len(laminates))),
+                  "triax": np.zeros((2, len(laminates)))}
 
 for i in range(len(laminates)):
     uniax_found = False
     triax_found = False
     for j in range(2):
-        laminate_i = laminates[i].laminate
-        if laminates[i].ply_names[j] == "uniax1":
-            strength_i = laminates[i].laminate.plies[j].material.strength_as_dict()
-            failure_tsaihill["uniax"][i] = \
+        laminate_i = laminates[i]
+        if laminate_i.ply_names[j] == "uniax1":
+            strength_i = laminate_i.laminate.plies[j].material.strength_as_dict()
+            failure_tsaihill["uniax"][0, i] = \
                 clt.failure.TsaiHill.failure_index(stress=(sigma[i], 0, 0),
                                                    **strength_i)
-            failure_tsaiwu["uniax"][i] = \
+            failure_tsaihill["uniax"][1, i] = \
+                clt.failure.TsaiHill.failure_index(stress=(-sigma[i], 0, 0),
+                                                   **strength_i)
+            failure_tsaiwu["uniax"][0, i] = \
                 clt.failure.TsaiWu.failure_index(stress=(sigma[i], 0, 0),
                                                    **strength_i)
-        elif laminates[i].ply_names[j] == "triax1":
-            strength_i = laminates[i].laminate.plies[j].material.strength_as_dict()
-            failure_tsaihill["triax"][i] = \
+            failure_tsaiwu["uniax"][1, i] = \
+                clt.failure.TsaiWu.failure_index(stress=(-sigma[i], 0, 0),
+                                                   **strength_i)
+        elif laminate_i.ply_names[j] == "triax1":
+            strength_i = laminate_i.laminate.plies[j].material.strength_as_dict()
+            failure_tsaihill["triax"][0, i] = \
                 clt.failure.TsaiHill.failure_index(stress=(sigma[i], 0, 0),
                                                    **strength_i)
-            failure_tsaiwu["triax"][i] = \
+            failure_tsaihill["triax"][1, i] = \
+                clt.failure.TsaiHill.failure_index(stress=(-sigma[i], 0, 0),
+                                                   **strength_i)
+            failure_tsaiwu["triax"][0, i] = \
                 clt.failure.TsaiWu.failure_index(stress=(sigma[i], 0, 0),
+                                                   **strength_i)
+            failure_tsaiwu["triax"][1, i] = \
+                clt.failure.TsaiWu.failure_index(stress=(-sigma[i], 0, 0),
                                                    **strength_i)
 
 
-if any((any(failure_tsaiwu["uniax"]>=1), any(failure_tsaiwu["triax"]>=1),
-       any(failure_tsaihill["uniax"]>=1), any(failure_tsaihill["triax"]>=1))):
+if any((np.any(failure_tsaiwu["uniax"]>=1), np.any(failure_tsaiwu["triax"]>=1),
+       np.any(failure_tsaihill["uniax"]>=1), np.any(failure_tsaihill["triax"]>=1))):
     print("Failure detected.")
 
 # Plot Tsai-Wu and Tsai-Hill
-failure_plot = np.zeros((4, len(x)))
-failure_plot[0, :-1] = failure_tsaihill["uniax"]
-failure_plot[1, :-1] = failure_tsaihill["triax"]
-failure_plot[2, :-1] = failure_tsaiwu["uniax"]
-failure_plot[3, :-1] = failure_tsaiwu["triax"]
-failure_plot[0, -1] = failure_tsaihill["uniax"][-1]
-failure_plot[1, -1] = failure_tsaihill["triax"][-1]
-failure_plot[2, -1] = failure_tsaiwu["uniax"][-1]
-failure_plot[3, -1] = failure_tsaiwu["triax"][-1]
 rcparams = scivis.rcparams._prepare_rcparams(profile="partsize", scale=.65)
 with mpl.rc_context(rcparams):
-    fig, ax = scivis.subplots(figsize=(20,8))
-    fig, ax, _ = scivis.plot_line(x, failure_plot, ax=ax,
-                                  ax_labels=["r", None], ax_units=["m", None],
-                                  colors=["#da881b", "#8f0062"]*2,
-                                  linestyles=["-"]*2 + ["--"]*2,
-                                  profile="partsize", scale=.6,
-                                  override_axes_settings=True,
-                                  show_legend=False)
+    for i, load_case in enumerate(["tensile", "compressive"]):
+        failure_plot = np.zeros((4, len(x)))
+        failure_plot[0, :-1] = failure_tsaihill["uniax"][i, :]
+        failure_plot[1, :-1] = failure_tsaihill["triax"][i, :]
+        failure_plot[2, :-1] = failure_tsaiwu["uniax"][i, :]
+        failure_plot[3, :-1] = failure_tsaiwu["triax"][i, :]
+        failure_plot[0, -1] = failure_tsaihill["uniax"][i, -1]
+        failure_plot[1, -1] = failure_tsaihill["triax"][i, -1]
+        failure_plot[2, -1] = failure_tsaiwu["uniax"][i, -1]
+        failure_plot[3, -1] = failure_tsaiwu["triax"][i, -1]
 
-    # Add two legend manually
-    legend_handles = [mpl.lines.Line2D([0], [0], c='black', ls=ls, label=lbl)
-                      for ls, lbl in [["-", "Tsai-Hill"], ["--", "Tsai-Wu"]]]
-    ax.legend(handles=legend_handles, loc="upper left",
-              bbox_to_anchor=(1, 1), fontsize=33)
-    ax.add_artist(ax.get_legend())
+        # fig, ax = scivis.subplots(figsize=(20,8))
+        fig, ax, _ = scivis.plot_line(x, failure_plot,
+                                      ax_labels=["r", None], ax_units=["m", None],
+                                      colors=["#da881b", "#8f0062"]*2,
+                                      linestyles=["-"]*2 + ["--"]*2,
+                                      profile="partsize", scale=.6,
+                                      override_axes_settings=True,
+                                      show_legend=False)
 
-    legend_handles = [mpl.lines.Line2D([0], [0], c=c, ls="-", label=lbl)
+        # # Add two legend manually
+        # legend_handles = [mpl.lines.Line2D([0], [0], c='black', ls=ls, label=lbl)
+        #                   for ls, lbl in [["-", "Tsai-Hill"], ["--", "Tsai-Wu"]]]
+        # ax.legend(handles=legend_handles, loc="upper left",
+        #           bbox_to_anchor=(1, 1), fontsize=33)
+        # ax.add_artist(ax.get_legend())
+
+        # legend_handles = [mpl.lines.Line2D([0], [0], c=c, ls="-", label=lbl)
+        #                   for c, lbl in [["#da881b", "Uniaxial ply"],
+        #                                  ["#8f0062", "Triaxial Ply"]]]
+        # ax.legend(handles=legend_handles, loc="upper left",
+        #           bbox_to_anchor=(1, .7), fontsize=33)
+
+        ax.set_ylabel("Failure index")
+
+        if savefigs:
+            fig.savefig(exp_fld / f"p2_failure_vs_span_{load_case}.svg")
+
+    # Create legend as separate figure
+    fig_leg, ax_leg = scivis.subplots(figsize=(12, 4))
+
+    # Hide axis
+    ax_leg.axis("off")
+
+    # --- First legend (failure criteria) ---
+    legend_handles_1 = [mpl.lines.Line2D([0], [0], c='black', ls=ls, label=lbl)
+                        for ls, lbl in [["-", "Tsai-Hill"], ["--", "Tsai-Wu"]]]
+
+    legend1 = ax_leg.legend(handles=legend_handles_1, loc="upper left",
+                            bbox_to_anchor=(0, -.3), fontsize=33)
+    ax_leg.add_artist(legend1)
+
+    # --- Second legend (laminates) ---
+    legend_handles_2 = [mpl.lines.Line2D([0], [0], c=c, ls="-", label=lbl)
                       for c, lbl in [["#da881b", "Uniaxial ply"],
                                      ["#8f0062", "Triaxial Ply"]]]
-    ax.legend(handles=legend_handles, loc="upper left",
-              bbox_to_anchor=(1, .7), fontsize=33)
+    legend2 = ax_leg.legend(handles=legend_handles_2,
+                            loc="upper left", bbox_to_anchor=(0.45, -.3),
+                            fontsize=33)
+    plt.tight_layout()
 
-    ax.set_ylabel("Failure index")
-
-    if savefigs:
-        fig.savefig(exp_fld / "p2_failure_vs_span.svg")
+    # if savefigs:
+    #     fig_leg.savefig(exp_fld / "p2_failure_index_legend.svg")
 
 plt.show()
