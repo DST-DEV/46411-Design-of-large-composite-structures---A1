@@ -100,7 +100,7 @@ A_inv = np.stack([[np.linalg.inv(section.laminate.ABD_matrix[:3, :3])
                    for section in laminate] for laminate in laminates], axis=0)
 
 E_f = 1.0 / (A_inv[..., 0, 0] * t_spar)
-d = t_bld+t_spar
+d = t_bld - t_spar
 I_bld = t_spar * w_spar * d**2 / 2
 EI_bld = E_f * I_bld
 
@@ -144,7 +144,7 @@ kappa = np.zeros([N_laminates, len(x)])
 for i in range(N_beams):
     idx = N_beams - i - 1
     M[:, idx] = Q[:, idx]*l_beams[:, idx] + M[:, idx+1]
-    kappa[:, idx] = M[:, idx]/EI_bld[:, idx] + kappa[:, idx+1]
+kappa[:, :-1] = M[:, :-1]/EI_bld
 
 theta = np.zeros([N_laminates, len(x)])
 w = np.zeros([N_laminates, len(x)])
